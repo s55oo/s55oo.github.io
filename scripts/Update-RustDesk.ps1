@@ -7,11 +7,16 @@
       .\Update-RustDesk.ps1 -Nightly    # nightly build
       .\Update-RustDesk.ps1 -Force      # reinstall even if already up to date
       .\Update-RustDesk.ps1 -NoPause    # don't wait for a key at the end (for scheduled tasks)
+      .\Update-RustDesk.ps1 -Yes        # don't ask for YES confirmation (for scheduled tasks)
+
+    NOTE: Installing restarts the RustDesk service, which disconnects all active
+          RustDesk sessions. You must type YES to agree before anything is installed.
 #>
 param(
     [switch]$Nightly,
     [switch]$Force,
-    [switch]$NoPause
+    [switch]$NoPause,
+    [switch]$Yes          # skip the YES confirmation (for scheduled / unattended runs)
 )
 
 # Relaunch elevated (UAC prompt) if not already running as Administrator
@@ -23,6 +28,7 @@ if (-not $isAdmin) {
     if ($Nightly) { $argList += '-Nightly' }
     if ($Force)   { $argList += '-Force' }
     if ($NoPause) { $argList += '-NoPause' }
+    if ($Yes)     { $argList += '-Yes' }
     try   { Start-Process -FilePath 'powershell.exe' -ArgumentList $argList -Verb RunAs }
     catch { Write-Host "Administrator rights were declined - cannot update RustDesk." -ForegroundColor Red; exit 1 }
     exit 0
@@ -52,7 +58,11 @@ function Get-InstalledRustDeskVersion {
     return $null
 }
 
+# Publisher name RustDesk's Windows installers are signed with
+$ExpectedSigner = 'PURSLANE'
+
 $installer = $null
+$workDir   = $null
 $exitCode  = 0
 try {
     # 1. Ask GitHub which release / file is current (no hard-coded version)
@@ -81,12 +91,52 @@ try {
         return
     }
 
-    # 3. Download to TEMP
-    $installer = Join-Path $env:TEMP $asset.name
+    # Confirmation: the RustDesk service will be stopped and restarted
+    if (-not $Yes) {
+        Write-Host ""
+        Write-Host "NOTE: To install the update, the RustDesk service will be STOPPED and RESTARTED." -ForegroundColor Yellow
+        Write-Host "      All active RustDesk connections to this computer will be disconnected" -ForegroundColor Yellow
+        Write-Host "      (including the one you may be using right now)." -ForegroundColor Yellow
+        Write-Host ""
+        $answer = Read-Host "Type YES to agree and install RustDesk $latest"
+        if ($answer -cne 'YES') {
+            Write-Host "Cancelled - nothing was changed." -ForegroundColor Cyan
+            return
+        }
+    }
+
+    # 3. Download into a fresh folder that only Administrators and SYSTEM can access
+    #    (user TEMP is writable by any non-admin process, which could swap the file)
+    $workDir = Join-Path $env:SystemRoot ("Temp\RustDeskUpdate-" + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+    $null = & icacls.exe $workDir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F'
+    if ($LASTEXITCODE -ne 0) { throw "Could not lock down the download folder." }
+
+    $installer = Join-Path $workDir $asset.name
     Write-Host "Downloading $($asset.name) ($([math]::Round($asset.size / 1MB, 1)) MB)..."
     Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $installer -UseBasicParsing
 
     if ((Get-Item $installer).Length -ne $asset.size) { throw "Downloaded file size doesn't match - download is incomplete." }
+
+    # 4a. Verify SHA-256 against the hash GitHub publishes for the release file
+    $hash = (Get-FileHash -Path $installer -Algorithm SHA256).Hash
+    if ($asset.digest -and $asset.digest -like 'sha256:*') {
+        $expected = $asset.digest.Substring(7)
+        if ($hash -ne $expected) { throw "SHA-256 mismatch! Expected $expected, got $hash. Installer NOT run." }
+        Write-Host "SHA-256 verified: $hash" -ForegroundColor Green
+    } else {
+        Write-Warning "GitHub did not publish a hash for this file - relying on the signature check only. SHA-256: $hash"
+    }
+
+    # 4b. Verify the Windows code signature and the publisher
+    $sig = Get-AuthenticodeSignature -FilePath $installer
+    if ($sig.Status -ne 'Valid') {
+        throw "Digital signature is not valid ($($sig.Status): $($sig.StatusMessage)). Installer NOT run."
+    }
+    if ($sig.SignerCertificate.Subject -notmatch $ExpectedSigner) {
+        throw "Unexpected publisher: $($sig.SignerCertificate.Subject). Installer NOT run."
+    }
+    Write-Host "Signature valid: $($sig.SignerCertificate.GetNameInfo('SimpleName', $false))" -ForegroundColor Green
 
     # 4. Stop running RustDesk so its files can be replaced (ID and config are kept)
     Write-Host "Stopping RustDesk if it is running..."
@@ -97,14 +147,18 @@ try {
     # 5. Install silently
     Write-Host "Installing silently (this can take a minute)..."
     if ($installer -like '*.msi') {
-        $log  = Join-Path $env:TEMP 'rustdesk-install.log'
+        $log  = Join-Path $workDir 'rustdesk-install.log'
         $p    = Start-Process -FilePath 'msiexec.exe' -Wait -PassThru `
                   -ArgumentList "/i `"$installer`" /qn /norestart /l*v `"$log`""
         switch ($p.ExitCode) {
             0       { }
             3010    { Write-Warning "Installed - a reboot is required to finish." }
             1618    { throw "Another installation is in progress. Try again in a few minutes." }
-            default { throw "msiexec failed with exit code $($p.ExitCode). See log: $log" }
+            default {
+                $keptLog = Join-Path $env:ProgramData 'rustdesk-install-failed.log'
+                Copy-Item $log $keptLog -Force -ErrorAction SilentlyContinue
+                throw "msiexec failed with exit code $($p.ExitCode). See log: $keptLog"
+            }
         }
     }
     else {
@@ -127,10 +181,10 @@ catch {
     $exitCode = 1
 }
 finally {
-    # 5. Clean up the installer (retry while it's still locked)
-    if ($installer -and (Test-Path $installer)) {
+    # Clean up the download folder (retry while the installer is still locked)
+    if ($workDir -and (Test-Path $workDir)) {
         for ($i = 0; $i -lt 10; $i++) {
-            try { Remove-Item $installer -Force; Write-Host "Installer removed."; break }
+            try { Remove-Item $workDir -Recurse -Force; Write-Host "Installer removed."; break }
             catch { Start-Sleep -Seconds 2 }
         }
     }
