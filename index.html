@@ -83,6 +83,7 @@
   .cmd button:hover { border-color: var(--amber); }
   .card p.note { font-size: 12px; flex: 0; margin-top: 2px; }
   .card p.note.warn { color: var(--amber); }
+  .acts .dl { color: var(--muted); margin-left: auto; }
   .grp { font: 600 15px var(--sans); color: var(--text); margin: 32px 0 14px; }
   .grp:first-of-type { margin-top: 0; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; flex: 1; }
@@ -203,5 +204,26 @@
   <div class="wrap"><b>73</b> de S55OO · built with GitHub Pages</div>
 </footer>
 
+<script>
+// Live download totals from GitHub releases (all releases, all files)
+(async () => {
+  const links = document.querySelectorAll('.acts a[href*="/releases/latest"]');
+  for (const a of links) {
+    const m = a.href.match(/github\.com\/([^/]+)\/([^/]+)\/releases/);
+    if (!m) continue;
+    try {
+      const r = await fetch('https://api.github.com/repos/' + m[1] + '/' + m[2] + '/releases?per_page=100');
+      if (!r.ok) continue;
+      const rel = await r.json();
+      const n = rel.reduce((t, x) => t + x.assets.reduce((u, y) => u + y.download_count, 0), 0);
+      const span = document.createElement('span');
+      span.className = 'dl';
+      span.title = 'Total downloads of all release files on GitHub';
+      span.textContent = '\u2193 ' + n.toLocaleString('en') + (n === 1 ? ' download' : ' downloads');
+      a.parentElement.appendChild(span);
+    } catch (e) { }
+  }
+})();
+</script>
 </body>
 </html>
