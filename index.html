@@ -69,6 +69,18 @@
   .card h3 { margin: 0; font: 600 17px var(--mono); }
   .card h3 a { color: #fff; }
   .acts { display: flex; gap: 14px; font: 13px var(--mono); margin-top: 4px; }
+  .cmd { position: relative; margin-top: 6px; }
+  .cmd-label { font: 12px var(--mono); color: var(--muted); margin-bottom: 4px; }
+  .cmd code {
+    display: block; font: 12px/1.5 var(--mono); color: var(--text); background: #0b0e12;
+    border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; padding-right: 56px;
+    white-space: pre-wrap; word-break: break-all; user-select: all;
+  }
+  .cmd button {
+    position: absolute; top: 24px; right: 6px; font: 11px var(--mono); color: var(--amber);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 3px 7px; cursor: pointer;
+  }
+  .cmd button:hover { border-color: var(--amber); }
   .grp { font: 600 15px var(--sans); color: var(--text); margin: 32px 0 14px; }
   .grp:first-of-type { margin-top: 0; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; flex: 1; }
@@ -161,6 +173,11 @@
           <h3><a href="https://github.com/s55oo/s55oo.github.io/blob/main/scripts/Update-RustDesk.ps1">Update-RustDesk</a></h3>
           <p>PowerShell script that downloads and silently installs the newest RustDesk for Windows x64. Options for nightly builds, forced reinstall and scheduled tasks.</p>
           <span class="lang">PowerShell · Windows</span>
+          <div class="cmd">
+            <div class="cmd-label">Run in PowerShell:</div>
+            <code>iwr https://s55oo.github.io/scripts/Update-RustDesk.ps1 -OutFile $env:TEMP\Update-RustDesk.ps1 -UseBasicParsing; powershell -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\Update-RustDesk.ps1</code>
+            <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent).then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button>
+          </div>
           <div class="acts"><a href="https://github.com/s55oo/s55oo.github.io/blob/main/scripts/Update-RustDesk.ps1">Source</a><a href="https://s55oo.github.io/scripts/Update-RustDesk.ps1" download>Download</a></div>
         </div>
       </div>
