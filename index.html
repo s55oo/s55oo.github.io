@@ -33,7 +33,7 @@
   .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
 
   /* Header */
-  header { padding: 72px 0 48px; border-bottom: 1px solid var(--line); }
+  header { padding: 20px 0; border-bottom: 1px solid var(--line); }
   .tag {
     font: 13px var(--mono); color: var(--green); letter-spacing: .12em;
     text-transform: uppercase; display: flex; align-items: center; gap: 10px;
@@ -43,7 +43,7 @@
   @keyframes blink { 50% { opacity: .25; } }
   h1 {
     font: 700 clamp(28px, 5.5vw, 60px)/1 var(--mono);
-    margin: 0 0 12px; letter-spacing: -.02em; color: #fff;
+    margin: 0; white-space: nowrap; letter-spacing: -.02em; color: #fff;
   }
   h1 span { color: var(--amber); }
   h1 small { font-size: .667em; color: var(--muted); font-weight: 600; margin-left: .3em; }
@@ -51,7 +51,7 @@
   .morse { font: 14px var(--mono); color: #4b5563; margin-top: 22px; letter-spacing: .2em; }
 
   /* Sections */
-  section { padding: 56px 0; border-bottom: 1px solid var(--line); }
+  section { padding: 28px 0; border-bottom: 1px solid var(--line); }
   h2 {
     font: 600 13px var(--mono); color: var(--muted); letter-spacing: .14em;
     text-transform: uppercase; margin: 0 0 24px;
@@ -91,8 +91,7 @@
 
 <header>
   <div class="wrap">
-    <h1>S5<span>5</span>OO<small>software</small></h1>
-    <p class="sub">Software for the shack.</p>
+    <h1>S5<span>5</span>OO<small>– software for the shack.</small></h1>
   </div>
 </header>
 
