@@ -81,6 +81,7 @@
     background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 3px 7px; cursor: pointer;
   }
   .cmd button:hover { border-color: var(--amber); }
+  .card p.note { font-size: 12px; flex: 0; margin-top: 2px; }
   .grp { font: 600 15px var(--sans); color: var(--text); margin: 32px 0 14px; }
   .grp:first-of-type { margin-top: 0; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; flex: 1; }
@@ -178,7 +179,8 @@
             <code>iwr https://s55oo.github.io/scripts/Update-RustDesk.ps1 -OutFile $env:TEMP\Update-RustDesk.ps1 -UseBasicParsing; powershell -NoProfile -ExecutionPolicy Bypass -File $env:TEMP\Update-RustDesk.ps1</code>
             <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent).then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button>
           </div>
-          <div class="acts"><a href="https://github.com/s55oo/s55oo.github.io/blob/main/scripts/Update-RustDesk.ps1">Source</a><a href="https://s55oo.github.io/scripts/Update-RustDesk.ps1" download>Download</a></div>
+          <p class="note">The “View source” link lets people read the script before running it.</p>
+          <div class="acts"><a href="https://github.com/s55oo/s55oo.github.io/blob/main/scripts/Update-RustDesk.ps1">View source</a><a href="https://s55oo.github.io/scripts/Update-RustDesk.ps1" download>Download</a></div>
         </div>
       </div>
     </div>
