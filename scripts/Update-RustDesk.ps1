@@ -70,6 +70,24 @@ function Get-RustDeskInstall {
     return $null
 }
 
+function ConvertTo-ShortVersion([string]$v) {
+    # MSI reports e.g. 1.4.9.29722256 - compare only major.minor.patch (1.4.9)
+    if (-not $v) { return $null }
+    return (($v -replace '^v', '') -split '[.\-]' | Select-Object -First 3) -join '.'
+}
+
+function Invoke-AndWait([string]$file, [string]$arguments, [int]$timeoutSec) {
+    # Waits for THIS process only. (Start-Process -Wait also waits for every child
+    # process, and the RustDesk installer starts RustDesk itself, so it never returns.)
+    $p = Start-Process -FilePath $file -ArgumentList $arguments -PassThru
+    $null = $p.Handle                      # needed so ExitCode is available afterwards
+    if (-not $p.WaitForExit($timeoutSec * 1000)) {
+        Write-Warning "$([IO.Path]::GetFileName($file)) still running after $timeoutSec s - continuing."
+        return $null
+    }
+    return $p.ExitCode
+}
+
 function Start-RustDeskService {
     # Make sure the RustDesk service exists and is running. Returns $true on success.
     $exe = Join-Path $env:ProgramFiles 'RustDesk\rustdesk.exe'
@@ -77,7 +95,7 @@ function Start-RustDeskService {
         $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
         if (-not $svc -and (Test-Path $exe)) {
             Write-Host "RustDesk service missing - registering it..."
-            Start-Process -FilePath $exe -ArgumentList '--install-service' -Wait -ErrorAction SilentlyContinue
+            $null = Invoke-AndWait $exe '--install-service' 60
             Start-Sleep -Seconds 5
             $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
         }
@@ -115,7 +133,8 @@ try {
     Write-Host ("Installed: {0}   Available: {1}" -f
         $(if ($current) { "$($current.Version) ($($current.Type) install)" } else { 'not installed' }), $latest)
 
-    if (-not $Nightly -and -not $Force -and $current -and ($current.Version -eq $latest)) {
+    if (-not $Nightly -and -not $Force -and $current -and
+        ((ConvertTo-ShortVersion $current.Version) -eq (ConvertTo-ShortVersion $latest))) {
         Write-Host "RustDesk is already up to date. Nothing to do." -ForegroundColor Green
         return
     }
@@ -186,18 +205,17 @@ try {
     Write-Host "Installing silently (this can take a minute)..."
     if ($installer -like '*.msi') {
         $msiLog = Join-Path $env:ProgramData 'RustDesk-Update-msi.log'
-        $p = Start-Process -FilePath 'msiexec.exe' -Wait -PassThru `
-               -ArgumentList "/i `"$installer`" /qn /norestart /l*v `"$msiLog`""
-        switch ($p.ExitCode) {
+        $code = Invoke-AndWait 'msiexec.exe' "/i `"$installer`" /qn /norestart /l*v `"$msiLog`"" 600
+        switch ($code) {
             0       { }
+            $null   { Write-Warning "msiexec did not finish in 10 minutes - checking the result anyway." }
             3010    { Write-Warning "Installed - a reboot is required to finish." }
             1618    { throw "Another installation is in progress. Try again in a few minutes." }
-            default { throw "msiexec failed with exit code $($p.ExitCode). Details: $msiLog" }
+            default { throw "msiexec failed with exit code $code. Details: $msiLog" }
         }
     }
     else {
-        $p = Start-Process -FilePath $installer -ArgumentList '--silent-install' -PassThru
-        $null = $p.WaitForExit(180000)
+        $null = Invoke-AndWait $installer '--silent-install' 180
     }
 
     # 8. Wait (up to 2 min) until Windows reports the NEW version
@@ -205,10 +223,10 @@ try {
     for ($i = 0; $i -lt 60; $i++) {
         Start-Sleep -Seconds 2
         $now = Get-RustDeskInstall
-        if ($now -and ($Nightly -or $now.Version -eq $latest)) { break }
+        if ($now -and ($Nightly -or (ConvertTo-ShortVersion $now.Version) -eq (ConvertTo-ShortVersion $latest))) { break }
     }
     if (-not $now) { throw "Installer finished but RustDesk does not show up as installed." }
-    if (-not $Nightly -and $now.Version -ne $latest) {
+    if (-not $Nightly -and (ConvertTo-ShortVersion $now.Version) -ne (ConvertTo-ShortVersion $latest)) {
         throw "Install did not complete: version is still $($now.Version), expected $latest."
     }
     Write-Host "Installed version is now: $($now.Version)" -ForegroundColor Green
