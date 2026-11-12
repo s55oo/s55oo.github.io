@@ -71,8 +71,12 @@
     padding: 20px; display: flex; flex-direction: column; gap: 8px;
     transition: border-color .15s, transform .15s; color: inherit;
   }
-  .card:hover { border-color: var(--amber); transform: translateY(-2px); text-decoration: none; }
-  .card h3 { margin: 0; font: 600 17px var(--mono); color: #fff; }
+  .card:hover { border-color: var(--amber); transform: translateY(-2px); }
+  .card h3 { margin: 0; font: 600 17px var(--mono); }
+  .card h3 a { color: #fff; }
+  .acts { display: flex; gap: 14px; font: 13px var(--mono); margin-top: 4px; }
+  .grp { font: 600 15px var(--sans); color: var(--text); margin: 32px 0 14px; }
+  .grp:first-of-type { margin-top: 0; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; flex: 1; }
   .lang { font: 12px var(--mono); color: var(--green); }
   .lang::before { content: "● "; }
@@ -116,33 +120,63 @@
 
   <section>
     <div class="wrap">
-      <h2>Projects</h2>
+      <h2>Software</h2>
+      <h4 class="grp">Contesting with N1MM Logger+</h4>
       <div class="grid">
-        <a class="card" href="https://github.com/s55oo/BCNscanner">
-          <h3>BCNscanner</h3>
-          <p>Dashboard for the MMMonVHF 2&nbsp;m beacon list: distance and bearing from your locator, radar scope, rotator control and rig tuning via rigctld. Runs in Docker.</p>
-          <span class="lang">HTML · Python</span>
-        </a>
-        <a class="card" href="https://github.com/s55oo/Ham_logger">
-          <h3>Ham_logger</h3>
-          <p>A simple logger for radio amateurs.</p>
+        <div class="card">
+          <h3><a href="https://github.com/s55oo/POUNCer">POUNCer</a></h3>
+          <p>Smart search &amp; pounce: live RBN and cluster spots for the band you're on, new mults and rare runners first, one-tap QSY on radio A or B.</p>
+          <span class="lang">Python · Windows / macOS</span>
+          <div class="acts"><a href="https://github.com/s55oo/POUNCer">Source</a><a href="https://github.com/s55oo/POUNCer/releases/latest">Download</a></div>
+        </div>
+        <div class="card">
+          <h3><a href="https://github.com/s55oo/N1MM_callbook">Callbooker</a></h3>
+          <p>Contest callbook for HF and VHF. Queries every source in parallel and shows the values side by side, so a wrong one stands out.</p>
+          <span class="lang">Python</span>
+          <div class="acts"><a href="https://github.com/s55oo/N1MM_callbook">Source</a><a href="https://github.com/s55oo/N1MM_callbook/releases/latest">Download</a></div>
+        </div>
+        <div class="card">
+          <h3><a href="https://github.com/s55oo/N1MMPingPong">PingPong</a></h3>
+          <p>Network lamps for multi-op stations: shows which position is transmitting, in its own colour, from N1MM's UDP broadcast.</p>
+          <span class="lang">Python · Windows</span>
+          <div class="acts"><a href="https://github.com/s55oo/N1MMPingPong">Source</a><a href="https://github.com/s55oo/N1MMPingPong/releases/latest">Download</a></div>
+        </div>
+        <div class="card">
+          <h3><a href="https://github.com/s55oo/N1MM_vRadio2">vRadio</a></h3>
+          <p>Virtual radio for SO2V(R): presents the FTDX101D's SUB VFO to N1MM as a second radio (Kenwood TS-2000) over TCP.</p>
+          <span class="lang">Python · Windows</span>
+          <div class="acts"><a href="https://github.com/s55oo/N1MM_vRadio2">Source</a><a href="https://github.com/s55oo/N1MM_vRadio2/releases/latest">Download</a></div>
+        </div>
+      </div>
+      <h4 class="grp">Logging</h4>
+      <div class="grid">
+        <div class="card">
+          <h3><a href="https://github.com/s55oo/QSOrouter">QSOrouter</a></h3>
+          <p>Takes QSOs from WSJT-X, N1MM Logger+ and DXLog and forwards them to several logbooks at once: UDP, HRD, Wavelog, CQ Radio, HTTP or ADIF file.</p>
+          <span class="lang">Python · no dependencies</span>
+          <div class="acts"><a href="https://github.com/s55oo/QSOrouter">Source</a><a href="https://github.com/s55oo/QSOrouter/releases/latest">Download</a></div>
+        </div>
+        <div class="card">
+          <h3><a href="https://github.com/s55oo/Ham_logger">Ham_logger</a></h3>
+          <p>Simple single-file logger that runs in the browser, offline-first, with ADIF export. Nothing is sent to a server.</p>
           <span class="lang">HTML</span>
-        </a>
-        <a class="card" href="https://github.com/s55oo/N1MMPingPong">
-          <h3>N1MMPingPong</h3>
-          <p>Tool for N1MM Logger+.</p>
-          <span class="lang">Python</span>
-        </a>
-        <a class="card" href="https://github.com/s55oo/N1MM_callbook">
-          <h3>N1MM_callbook</h3>
-          <p>Callbook tool for N1MM Logger+.</p>
-          <span class="lang">Python</span>
-        </a>
-        <a class="card" href="https://github.com/s55oo/QSOrouter">
-          <h3>QSOrouter</h3>
-          <p>Routes QSO data between logging tools.</p>
-          <span class="lang">Python</span>
-        </a>
+          <div class="acts"><a href="https://github.com/s55oo/Ham_logger">Source</a><a href="https://s55oo.github.io/Ham_logger/hamradio_logger.html">Open app</a></div>
+        </div>
+      </div>
+      <h4 class="grp">Station &amp; SDR</h4>
+      <div class="grid">
+        <div class="card">
+          <h3><a href="https://github.com/s55oo/BCNscanner">BCNscanner</a></h3>
+          <p>Dashboard for the MMMonVHF 2&nbsp;m beacon list: distance and bearing from your locator, radar scope, rotator control and rig tuning via rigctld.</p>
+          <span class="lang">Docker · Python · HTML</span>
+          <div class="acts"><a href="https://github.com/s55oo/BCNscanner">Source</a></div>
+        </div>
+        <div class="card">
+          <h3><a href="https://github.com/s55oo/MP3e2_to_AetherSDR">MP3e2 to AetherSDR</a></h3>
+          <p>Control a FlexRadio from a Hercules DJControl MP3 e2 in AetherSDR, with a ready MIDI profile and a click-to-map web page.</p>
+          <span class="lang">MIDI · AetherSDR</span>
+          <div class="acts"><a href="https://github.com/s55oo/MP3e2_to_AetherSDR">Source</a></div>
+        </div>
       </div>
     </div>
   </section>
