@@ -133,10 +133,49 @@ try {
     Write-Host ("Installed: {0}   Available: {1}" -f
         $(if ($current) { "$($current.Version) ($($current.Type) install)" } else { 'not installed' }), $latest)
 
-    if (-not $Nightly -and -not $Force -and $current -and
-        ((ConvertTo-ShortVersion $current.Version) -eq (ConvertTo-ShortVersion $latest))) {
-        Write-Host "RustDesk is already up to date. Nothing to do." -ForegroundColor Green
-        return
+    # 1b. Compare versions and warn about cases this script should not handle blindly
+    $curV = $null; $newV = $null
+    if ($current) { try { $curV = [version](ConvertTo-ShortVersion $current.Version) } catch { } }
+    try { $newV = [version](ConvertTo-ShortVersion $latest) } catch { }
+
+    # WDKTestCert left in the Trusted Root store by RustDesk 1.2.3 (CVE-2024-25140) - an upgrade does NOT remove it
+    $wdkCert = Get-ChildItem Cert:\LocalMachine\Root -ErrorAction SilentlyContinue |
+               Where-Object { $_.Subject -like '*WDKTestCert*' }
+    if ($wdkCert) {
+        Write-Host ""
+        Write-Host "SECURITY WARNING: an old RustDesk 'WDKTestCert' certificate is in Trusted Root (CVE-2024-25140)." -ForegroundColor Red
+        Write-Host "  Upgrading does not remove it. Remove it manually (certlm.msc > Trusted Root Certification" -ForegroundColor Red
+        Write-Host "  Authorities > Certificates > WDKTestCert) unless you rely on RustDesk's virtual display driver." -ForegroundColor Red
+        Write-Host ""
+    }
+
+    if (-not $Nightly -and $curV -and $newV) {
+        if ($curV -eq $newV -and -not $Force) {
+            Write-Host ""
+            Write-Host "RustDesk $($current.Version) is already installed - this is the latest version. Nothing to do." -ForegroundColor Green
+            Write-Host "(Use -Force to reinstall anyway.)"
+            $null = Start-RustDeskService
+            return
+        }
+        if ($curV -gt $newV -and -not $Force) {
+            Write-Host ""
+            Write-Host "Installed RustDesk $($current.Version) is NEWER than the latest stable $latest" -ForegroundColor Yellow
+            Write-Host "(probably a nightly/beta build). Not downgrading. Use -Force to install $latest anyway." -ForegroundColor Yellow
+            return
+        }
+        if ($curV -lt [version]'1.2.0' -and -not $Force) {
+            Write-Host ""
+            Write-Host "Installed RustDesk $($current.Version) is a very old 1.1.x (Sciter) version." -ForegroundColor Yellow
+            Write-Host "Upgrading it in place is NOT recommended. Instead:" -ForegroundColor Yellow
+            Write-Host "  1. Write down this PC's RustDesk ID and server settings." -ForegroundColor Yellow
+            Write-Host "  2. Uninstall RustDesk (Settings > Apps)." -ForegroundColor Yellow
+            Write-Host "  3. Run this script again for a clean install of $latest." -ForegroundColor Yellow
+            Write-Host "Use -Force to try the in-place upgrade anyway." -ForegroundColor Yellow
+            return
+        }
+        if ($curV.Major -ne $newV.Major -or ($newV.Minor - $curV.Minor) -ge 2) {
+            Write-Host "Note: big version jump ($($current.Version) -> $latest). Check settings after the upgrade." -ForegroundColor Yellow
+        }
     }
 
     # 2. Pick the SAME installer type as the existing install.
