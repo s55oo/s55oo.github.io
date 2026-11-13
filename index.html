@@ -84,6 +84,8 @@
   .card p.note { font-size: 12px; flex: 0; margin-top: 2px; }
   .card p.note.warn { color: var(--amber); }
   .acts .dl { color: var(--muted); margin-left: auto; }
+  .acts .help { margin-left: auto; }
+  .acts .dl + .help { margin-left: 0; }
   .grp { font: 600 15px var(--sans); color: var(--text); margin: 32px 0 14px; }
   .grp:first-of-type { margin-top: 0; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; flex: 1; }
@@ -119,19 +121,19 @@
           <h3><a href="https://github.com/s55oo/POUNCer">Pouncer</a></h3>
           <p>Smart search &amp; pounce: live RBN and cluster spots for the band you're on, new mults and rare runners first, one-tap QSY on radio A or B.</p>
           <span class="lang">Python · Windows / macOS</span>
-          <div class="acts"><a href="https://github.com/s55oo/POUNCer">Source</a><a href="https://github.com/s55oo/POUNCer/releases/latest">Download</a></div>
+          <div class="acts"><a href="https://github.com/s55oo/POUNCer">Source</a><a href="https://github.com/s55oo/POUNCer/releases/latest">Download</a><a class="help" href="https://github.com/s55oo/POUNCer/blob/main/docs/POUNCer-quick-reference.pdf" target="_blank" rel="noopener" title="Quick reference (PDF)">Help (PDF)</a></div>
         </div>
         <div class="card">
           <h3><a href="https://github.com/s55oo/N1MM_callbook">Callbooker</a></h3>
           <p>Contest callbook for HF and VHF. Queries every source in parallel and shows the values side by side, so a wrong one stands out.</p>
           <span class="lang">Python</span>
-          <div class="acts"><a href="https://github.com/s55oo/N1MM_callbook">Source</a><a href="https://github.com/s55oo/N1MM_callbook/releases/latest">Download</a></div>
+          <div class="acts"><a href="https://github.com/s55oo/N1MM_callbook">Source</a><a href="https://github.com/s55oo/N1MM_callbook/releases/latest">Download</a><a class="help" href="https://github.com/s55oo/N1MM_callbook/raw/main/docs/Callbooker_quick_reference.pdf" target="_blank" rel="noopener" title="Quick reference (PDF)">Help (PDF)</a></div>
         </div>
         <div class="card">
           <h3><a href="https://github.com/s55oo/N1MMPingPong">PingPonger</a></h3>
           <p>Network lamps for multi-op stations: shows which position is transmitting, in its own colour, from N1MM's UDP broadcast.</p>
           <span class="lang">Python · Windows</span>
-          <div class="acts"><a href="https://github.com/s55oo/N1MMPingPong">Source</a><a href="https://github.com/s55oo/N1MMPingPong/releases/latest">Download</a></div>
+          <div class="acts"><a href="https://github.com/s55oo/N1MMPingPong">Source</a><a href="https://github.com/s55oo/N1MMPingPong/releases/latest">Download</a><a class="help" href="https://github.com/s55oo/N1MMPingPong/blob/main/docs/PingPong-cheat-sheet.pdf" target="_blank" rel="noopener" title="Quick reference (PDF)">Help (PDF)</a></div>
         </div>
         <div class="card">
           <h3><a href="https://github.com/s55oo/N1MM_vRadio2">vRadio</a></h3>
@@ -222,7 +224,7 @@
       span.className = 'dl';
       span.title = 'Total downloads of all release files on GitHub';
       span.textContent = '\u2193 ' + n.toLocaleString('en') + (n === 1 ? ' download' : ' downloads');
-      a.parentElement.appendChild(span);
+      a.parentElement.insertBefore(span, a.parentElement.querySelector('.help'));
     } catch (e) { }
   }
 })();
